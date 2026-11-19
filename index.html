@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Preview: hero-picture</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1115;
+    color: #e7e9ee;
+    margin: 0;
+    padding: 40px 20px;
+  }
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .top-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .lang-switcher {
+    display: inline-flex;
+    flex-shrink: 0;
+    background: #161920;
+    border: 1px solid #262a34;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .lang-switcher button {
+    background: transparent;
+    color: #9aa0ab;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .lang-switcher button:hover { color: #e7e9ee; }
+  .lang-switcher button.active { background: #4ecdc4; color: #0f1115; }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  p.note {
+    color: #9aa0ab;
+    font-size: 14px;
+    margin-top: 0;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .badge-mobile { background: #ff6b6b22; color: #ff6b6b; border:1px solid #ff6b6b55; }
+  .badge-tablet { background: #ffd93d22; color: #ffd93d; border:1px solid #ffd93d55; }
+  .badge-desktop { background: #4ecdc422; color: #4ecdc4; border:1px solid #4ecdc455; }
+
+  /* ===== user's actual CSS ===== */
+  .hero-media{
+    width:100%;
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    container-type: inline-size; /* lets the empty state scale its text with the frame width */
+  }
+  /* Desktop */
+  .hero-picture,
+  .hero-video{
+    display:block;
+    width:100%;
+    aspect-ratio:16/6;
+  }
+  .hero-picture img,
+  .hero-video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  /* Tablet */
+  @media (max-width:1023px){
+    .hero-picture,
+    .hero-video,
+    .hero-empty{
+      aspect-ratio:16/8;
+    }
+  }
+  /* Mobile */
+  @media (max-width:767px){
+    .hero-picture,
+    .hero-video,
+    .hero-empty{
+      aspect-ratio:4/3;
+    }
+  }
+  /* ===== end user's CSS ===== */
+
+  /* Empty state / dropzone shown before any file is loaded */
+  .hero-empty {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 16/6;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1.4cqw, 14px);
+    padding: 12px;
+    background: #12151b;
+    border: 2px dashed #2c313c;
+    color: #7f8794;
+    cursor: pointer;
+    text-align: center;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .hero-empty:hover,
+  .hero-empty.drag-over {
+    background: #171b22;
+    border-color: #4ecdc4;
+    color: #c9ced8;
+  }
+  .hero-empty .icon { font-size: clamp(18px, 3.4cqw, 40px); line-height: 1; }
+  .hero-empty .title { font-weight: 700; font-size: clamp(12px, 2.2cqw, 24px); color: #e7e9ee; }
+  .hero-empty .formats { font-size: clamp(10px, 1.5cqw, 15px); color: #7f8794; max-width: 90%; }
+
+  .bp-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(15,17,21,0.75);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 28px;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #24272f;
+  }
+  th { color: #9aa0ab; font-weight: 600; }
+  code { color: #4ecdc4; background: #1a1d24; padding: 2px 6px; border-radius: 4px; }
+
+  .uploader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #161920;
+    border: 1px solid #262a34;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .uploader .file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #4ecdc4;
+    color: #0f1115;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .uploader .file-label:hover { background: #6fe0d8; }
+  .uploader input[type="file"] { display: none; }
+  .uploader .reset-btn {
+    background: transparent;
+    color: #9aa0ab;
+    border: 1px solid #33384344;
+    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .uploader .reset-btn:hover { color: #e7e9ee; border-color: #4a5060; }
+  .uploader .file-name {
+    font-size: 12px;
+    color: #9aa0ab;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 260px;
+  }
+  .uploader .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2c313c;
+    color: #e7e9ee;
+    border: 1px solid #3a4150;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .uploader .download-btn:hover { background: #3a4150; }
+  .uploader .download-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .uploader .download-status {
+    font-size: 12px;
+    color: #4ecdc4;
+    flex-basis: 100%;
+  }
+
+  /* ===== Breakpoint switcher ===== */
+  .bp-switcher {
+    display: flex;
+    background: #161920;
+    border: 1px solid #262a34;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .bp-switcher button {
+    flex: 1 0 auto;
+    background: transparent;
+    color: #9aa0ab;
+    border: none;
+    border-radius: 7px;
+    padding: 9px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .bp-switcher button:hover { color: #e7e9ee; background: #1f232c; }
+  .bp-switcher button.active {
+    background: #4ecdc4;
+    color: #0f1115;
+  }
+  .bp-switcher button .w {
+    display: block;
+    font-weight: 500;
+    font-size: 10px;
+    opacity: .8;
+  }
+
+  .frame-viewport {
+    overflow: hidden;
+    padding: 24px 16px 12px;
+    background:
+      linear-gradient(90deg, #1a1d24 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(#1a1d24 1px, transparent 1px) 0 0 / 24px 24px;
+    background-color: #0b0d11;
+    border-radius: 14px;
+    margin-bottom: 8px;
+  }
+  /* The scaler reserves the *scaled* size so the frame fits the screen without scrolling */
+  .frame-scaler { margin: 0 auto; position: relative; width: 100%; }
+  .device-frame {
+    width: 100%;
+    transform-origin: 0 0;
+  }
+  .device-frame-label {
+    text-align: center;
+    font-size: 11px;
+    color: #626873;
+    margin-bottom: 10px;
+    letter-spacing: .02em;
+  }
+
+  /* Forced aspect-ratio overrides used when simulating a fixed device width,
+     since the real @media queries key off the actual browser viewport. */
+  .hero-media.force-mobile .hero-picture,
+  .hero-media.force-mobile .hero-video,
+  .hero-media.force-mobile .hero-empty { aspect-ratio: 4/3 !important; }
+  .hero-media.force-tablet .hero-picture,
+  .hero-media.force-tablet .hero-video,
+  .hero-media.force-tablet .hero-empty { aspect-ratio: 16/8 !important; }
+  .hero-media.force-desktop .hero-picture,
+  .hero-media.force-desktop .hero-video,
+  .hero-media.force-desktop .hero-empty { aspect-ratio: 16/6 !important; }
+  /* Fixed pixel-size presets (e.g. 1920x520): ratio comes from --fixed-ratio */
+  .hero-media.force-fixed .hero-picture,
+  .hero-media.force-fixed .hero-video,
+  .hero-media.force-fixed .hero-empty { aspect-ratio: var(--fixed-ratio) !important; }
+
+  /* ===== Focus point panel ===== */
+  .focus-panel {
+    display: none;
+    background: #161920;
+    border: 1px solid #262a34;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 16px;
+  }
+  .focus-panel.show { display: block; }
+  .focus-head { font-size: 13px; margin-bottom: 12px; }
+  .focus-head strong { color: #e7e9ee; margin-right: 8px; }
+  .focus-head .focus-hint { color: #9aa0ab; font-size: 12px; }
+  .focus-body { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .focus-picker {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+    background: #0b0d11;
+    border: 1px solid #262a34;
+  }
+  .focus-picker canvas { display: block; width: 100%; height: auto; }
+  .focus-crop {
+    position: absolute;
+    border: 2px solid #ffd93d;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,.55);
+    pointer-events: none;
+  }
+  .focus-dot {
+    position: absolute;
+    width: 16px; height: 16px;
+    margin: -8px 0 0 -8px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #4ecdc4;
+    box-shadow: 0 0 0 2px rgba(0,0,0,.5);
+    pointer-events: none;
+  }
+  .focus-side { display: flex; flex-direction: column; gap: 10px; font-size: 12px; color: #9aa0ab; }
+  .focus-side .xy { display: flex; gap: 12px; }
+  .focus-side label { display: flex; align-items: center; gap: 6px; }
+  .focus-side input[type="number"] {
+    width: 60px;
+    background: #0f1115;
+    color: #e7e9ee;
+    border: 1px solid #2c313c;
+    border-radius: 6px;
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+  .focus-grid { display: grid; grid-template-columns: repeat(3, 30px); gap: 4px; }
+  .focus-grid button {
+    height: 30px;
+    background: #0f1115;
+    color: #9aa0ab;
+    border: 1px solid #2c313c;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .focus-grid button:hover { color: #0f1115; background: #4ecdc4; border-color: #4ecdc4; }
+  .focus-reset {
+    align-self: flex-start;
+    background: transparent;
+    color: #9aa0ab;
+    border: 1px solid #3a4150;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .focus-reset:hover { color: #e7e9ee; border-color: #4a5060; }
+
+  /* ===== Dev source-code section ===== */
+  .code-section {
+    margin-top: 36px;
+  }
+  .code-section h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #e7e9ee;
+  }
+  .code-section p.sub {
+    font-size: 13px;
+    color: #9aa0ab;
+    margin: 0 0 16px;
+    line-height: 1.6;
+  }
+  .code-block {
+    background: #12151b;
+    border: 1px solid #262a34;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .code-block-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #161920;
+    border-bottom: 1px solid #262a34;
+  }
+  .code-block-head span.filename {
+    font-size: 12px;
+    font-weight: 600;
+    color: #9aa0ab;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: #9aa0ab;
+    border: 1px solid #33384344;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .copy-btn:hover { color: #e7e9ee; border-color: #4a5060; background: #1f232c; }
+  .copy-btn.copied { color: #0f1115; background: #4ecdc4; border-color: #4ecdc4; }
+  .code-block pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.6;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    color: #d3d7de;
+  }
+  .code-block pre .tok-tag    { color: #ff8fa3; }
+  .code-block pre .tok-attr   { color: #ffd93d; }
+  .code-block pre .tok-str    { color: #a8e6a3; }
+  .code-block pre .tok-cmt    { color: #626873; font-style: italic; }
+  .code-block pre .tok-sel    { color: #4ecdc4; }
+  .code-block pre .tok-prop   { color: #9fd3ff; }
+
+  /* ===== Page-level responsive layout ===== */
+  img, video, canvas { max-width: 100%; }
+  @media (max-width: 1023px) {
+    body { padding: 28px 16px; }
+  }
+  @media (max-width: 767px) {
+    body { padding: 20px 12px; }
+    .top-bar { flex-wrap: wrap; gap: 10px; }
+    h1 { font-size: 17px; word-break: break-word; }
+    p.note { font-size: 13px; }
+    .uploader { padding: 12px; gap: 10px; }
+    .uploader .file-name { max-width: 100%; flex-basis: 100%; }
+    .uploader .download-btn { margin-left: 0; width: 100%; justify-content: center; }
+    .bp-switcher button { padding: 8px 8px; }
+    .frame-viewport { padding: 16px 8px 8px; border-radius: 12px; }
+    .focus-body { flex-direction: column; }
+    .focus-picker { width: 100%; }
+    table { display: block; overflow-x: auto; white-space: nowrap; }
+    .code-block pre { font-size: 12px; padding: 12px; }
+    .code-block-head { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-bar">
+    <h1 data-i18n="title">Preview: &lt;picture&gt; / &lt;video class="hero-video"&gt;</h1>
+    <div class="lang-switcher" id="lang-switcher">
+      <button type="button" data-lang="th" class="active">TH</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </div>
+  <p class="note" data-i18n-html="note"></p>
+
+  <div class="uploader">
+    <label class="file-label" for="file-input">
+      📁 <span data-i18n="uploadLabel">อัปโหลด / เปลี่ยนไฟล์</span>
+    </label>
+    <input type="file" id="file-input" accept="image/jpeg,image/png,image/gif,video/mp4">
+    <span class="file-name" id="file-name" data-i18n="noFile">ยังไม่ได้เลือกไฟล์</span>
+    <button class="reset-btn" id="reset-btn" type="button">🗑 <span data-i18n="clearBtn">ล้างไฟล์</span></button>
+    <button class="download-btn" id="download-btn" type="button" disabled>⬇ <span data-i18n="downloadBtn">ดาวน์โหลดไฟล์ที่ครอปแล้ว</span></button>
+    <span class="download-status" id="download-status"></span>
+  </div>
+
+  <div class="bp-switcher" id="bp-switcher">
+    <button type="button" data-width="auto" class="active"><span data-i18n="bpAuto">Auto</span><span class="w" data-i18n="bpAutoSub">Responsive</span></button>
+    <button type="button" data-width="320">Mobile S<span class="w">320px</span></button>
+    <button type="button" data-width="375">Mobile M<span class="w">375px</span></button>
+    <button type="button" data-width="425">Mobile L<span class="w">425px</span></button>
+    <button type="button" data-width="768">Tablet<span class="w">768px</span></button>
+    <button type="button" data-width="1024">Laptop<span class="w">1024px</span></button>
+    <button type="button" data-width="1440">Laptop L<span class="w">1440px</span></button>
+    <button type="button" data-width="2560">4K<span class="w">2560px</span></button>
+    <button type="button" data-width="1920" data-height="520">1920×520<span class="w" data-i18n="bpFixedSub">Fixed size</span></button>
+    <button type="button" data-width="700" data-height="520">700×520<span class="w" data-i18n="bpFixedSub">Fixed size</span></button>
+  </div>
+
+  <div class="frame-viewport" id="frame-viewport">
+    <div class="frame-scaler" id="frame-scaler">
+    <div class="device-frame" id="device-frame">
+      <div class="device-frame-label" id="device-frame-label"></div>
+      <div class="hero-media" id="hero-media">
+        <div class="hero-empty" id="hero-empty">
+          <span class="icon">⬆️</span>
+          <span class="title" data-i18n="emptyTitle">Upload File</span>
+          <span class="formats" data-i18n="emptyFormats">Supported formats: JPEG / PNG / GIF / MP4</span>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="focus-panel" id="focus-panel">
+    <div class="focus-head">
+      <strong data-i18n="focusTitle">จุดโฟกัสภาพ</strong>
+      <span class="focus-hint" data-i18n="focusHint"></span>
+    </div>
+    <div class="focus-body">
+      <div class="focus-picker" id="focus-picker">
+        <canvas id="focus-canvas" width="320" height="180"></canvas>
+        <div class="focus-crop" id="focus-crop"></div>
+        <div class="focus-dot" id="focus-dot"></div>
+      </div>
+      <div class="focus-side">
+        <div class="xy">
+          <label>X <input type="number" id="focus-x" min="0" max="100" step="1"> %</label>
+          <label>Y <input type="number" id="focus-y" min="0" max="100" step="1"> %</label>
+        </div>
+        <div class="focus-grid" id="focus-grid">
+          <button type="button" data-fx="0" data-fy="0">↖</button>
+          <button type="button" data-fx="50" data-fy="0">↑</button>
+          <button type="button" data-fx="100" data-fy="0">↗</button>
+          <button type="button" data-fx="0" data-fy="50">←</button>
+          <button type="button" data-fx="50" data-fy="50">•</button>
+          <button type="button" data-fx="100" data-fy="50">→</button>
+          <button type="button" data-fx="0" data-fy="100">↙</button>
+          <button type="button" data-fx="50" data-fy="100">↓</button>
+          <button type="button" data-fx="100" data-fy="100">↘</button>
+        </div>
+        <button type="button" class="focus-reset" id="focus-reset" data-i18n="focusReset">กึ่งกลาง</button>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th data-i18n="thBreakpoint">Breakpoint</th><th data-i18n="thMediaQuery">Media query</th><th data-i18n="thAspectRatio">aspect-ratio</th></tr>
+    <tr><td><span class="badge-mobile status">Mobile</span></td><td><code>max-width: 767px</code></td><td><code>4/3</code></td></tr>
+    <tr><td><span class="badge-tablet status">Tablet</span></td><td><code>max-width: 1023px</code></td><td><code>16/8</code></td></tr>
+    <tr><td><span class="badge-desktop status">Desktop</span></td><td data-i18n="tdAllOther">ทุกขนาดที่เหลือ</td><td><code>16/6</code></td></tr>
+  </table>
+
+  <section class="code-section">
+    <h2 data-i18n="codeHeading">Source code สำหรับ dev</h2>
+    <p class="sub" data-i18n="codeSub">โค้ด HTML + CSS จริงที่ใช้ควบคุมสัดส่วนภาพ/วิดีโอตามขนาดหน้าจอ คัดลอกไปใช้ในระบบได้เลย</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span class="filename" data-i18n="codeHtmlFilename">HTML — markup</span>
+        <button class="copy-btn" type="button" data-copy-target="code-html" data-i18n="copyBtn">📋 Copy</button>
+      </div>
+      <pre><code id="code-html">&lt;div class="hero-media"&gt;
+  &lt;!-- แบบรูปภาพ (responsive ต่างไฟล์ต่อ breakpoint) --&gt;
+  &lt;picture class="hero-picture"&gt;
+    &lt;source
+      media="(max-width:767px)"
+      srcset="/images/about-mobile.gif"&gt;
+    &lt;source
+      media="(max-width:1023px)"
+      srcset="/images/about-tablet.gif"&gt;
+    &lt;img
+      src="/images/about-desktop.gif"
+      alt="CTW Cargo"&gt;
+  &lt;/picture&gt;
+
+  &lt;!-- หรือแบบวิดีโอ (ไฟล์เดียว ครอปด้วย CSS) --&gt;
+  &lt;!--
+  &lt;video class="hero-video" autoplay muted loop playsinline&gt;
+    &lt;source src="/videos/about-desktop.mp4" type="video/mp4"&gt;
+  &lt;/video&gt;
+  --&gt;
+&lt;/div&gt;</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span class="filename" data-i18n="codeCssFilename">CSS — aspect-ratio ตาม breakpoint</span>
+        <button class="copy-btn" type="button" data-copy-target="code-css" data-i18n="copyBtn">📋 Copy</button>
+      </div>
+      <pre><code id="code-css">.hero-media{
+    width:100%;
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+}
+
+/* Desktop */
+.hero-picture,
+.hero-video{
+    display:block;
+    width:100%;
+    aspect-ratio:16/6;
+}
+.hero-picture img,
+.hero-video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+/* Tablet */
+@media (max-width:1023px){
+  .hero-picture,
+  .hero-video{
+      aspect-ratio:16/8;
+  }
+}
+
+/* Mobile */
+@media (max-width:767px){
+  .hero-picture,
+  .hero-video{
+      aspect-ratio:4/3;
+  }
+}</code></pre>
+    </div>
+  </section>
+</div>
+
+<script>
+  // ===== Breakpoint switcher =====
+  const heroMediaEl      = document.getElementById('hero-media');
+  const deviceFrame       = document.getElementById('device-frame');
+  const deviceFrameLabel  = document.getElementById('device-frame-label');
+  const frameViewport     = document.getElementById('frame-viewport');
+  const frameScaler       = document.getElementById('frame-scaler');
+  const bpSwitcher        = document.getElementById('bp-switcher');
+  let simulatedWidth = null;  // null = Auto (follows real window width)
+  let simulatedHeight = null; // only set for fixed-size presets (e.g. 1920x520)
+  let focusX = 50, focusY = 50; // focus point, % of the source image
+  let onLayoutChange = null;    // set later; re-applies the focus crop when size/breakpoint changes
+
+  function categoryFor(w) {
+    if (w <= 767) return 'mobile';
+    if (w <= 1023) return 'tablet';
+    return 'desktop';
+  }
+
+  function labelFor(cat) {
+    if (cat === 'mobile') return { text: 'Mobile · aspect-ratio 4/3', badgeClass: 'badge-mobile' };
+    if (cat === 'tablet') return { text: 'Tablet · aspect-ratio 16/8', badgeClass: 'badge-tablet' };
+    return { text: 'Desktop · aspect-ratio 16/6', badgeClass: 'badge-desktop' };
+  }
+
+  // Scale a simulated device frame down so it always fits the available width (no horizontal scrolling)
+  function fitFrame() {
+    if (simulatedWidth === null) {
+      frameScaler.style.width = '100%';
+      frameScaler.style.height = 'auto';
+      deviceFrame.style.transform = 'none';
+      deviceFrameLabel.textContent = '';
+      return;
+    }
+    const cs = getComputedStyle(frameViewport);
+    const avail = frameViewport.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const scale = Math.min(1, avail / simulatedWidth);
+    deviceFrame.style.transform = scale < 1 ? 'scale(' + scale + ')' : 'none';
+    frameScaler.style.width  = (simulatedWidth * scale) + 'px';
+    frameScaler.style.height = (deviceFrame.offsetHeight * scale) + 'px';
+    const base = deviceFrameLabel.dataset.base || '';
+    deviceFrameLabel.textContent = base + (scale < 1 ? ' · ' + Math.round(scale * 100) + '%' : '');
+  }
+  new ResizeObserver(fitFrame).observe(deviceFrame);
+
+  // Show current breakpoint label over the media for reference
+  function updateBadge() {
+    const w = simulatedWidth !== null ? simulatedWidth : window.innerWidth;
+    const cat = categoryFor(w);
+    const info = labelFor(cat);
+    const badge = document.getElementById('bp-badge');
+
+    heroMediaEl.classList.remove('force-mobile', 'force-tablet', 'force-desktop', 'force-fixed');
+    if (simulatedHeight !== null) {
+      heroMediaEl.style.setProperty('--fixed-ratio', simulatedWidth + '/' + simulatedHeight);
+      heroMediaEl.classList.add('force-fixed');
+      if (badge) badge.textContent = simulatedWidth + '×' + simulatedHeight + 'px · aspect-ratio ' + simulatedWidth + '/' + simulatedHeight;
+    } else {
+      if (badge) badge.textContent = info.text;
+      if (simulatedWidth !== null) heroMediaEl.classList.add('force-' + cat);
+    }
+    fitFrame();
+    if (onLayoutChange) onLayoutChange();
+  }
+  window.addEventListener('resize', updateBadge);
+  updateBadge();
+
+  bpSwitcher.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    bpSwitcher.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const raw = btn.dataset.width;
+    if (raw === 'auto') {
+      simulatedWidth = null;
+      simulatedHeight = null;
+      deviceFrame.style.width = '100%';
+      deviceFrameLabel.dataset.base = '';
+    } else {
+      simulatedWidth = parseInt(raw, 10);
+      simulatedHeight = btn.dataset.height ? parseInt(btn.dataset.height, 10) : null;
+      deviceFrame.style.width = simulatedWidth + 'px';
+      deviceFrameLabel.dataset.base = simulatedHeight !== null
+        ? simulatedWidth + '×' + simulatedHeight + 'px'
+        : btn.textContent.replace(/(\d+)px/, '· $1px');
+    }
+    updateBadge();
+  });
+
+  // ===== Language (EN / TH) =====
+  let currentLang = 'th';
+  let hasFile = false; // tracked so language switches don't clobber an already-shown filename
+
+  const I18N = {
+    th: {
+      title: 'Preview: <picture> / <video class="hero-video">',
+      note: `ค่าเริ่มต้นของ preview เป็นพื้นที่ว่างพร้อมข้อความ "Upload File" — คลิกหรือลากไฟล์มาวางในกรอบ
+        เพื่อโหลด (รองรับ JPEG / PNG / GIF / MP4) หรือกดปุ่ม "อัปโหลด / เปลี่ยนไฟล์" ก็ได้
+        (แสดงผลเฉพาะใน preview นี้ ไม่ได้อัปโหลดขึ้นเซิร์ฟเวอร์) และใช้แถบด้านล่างเพื่อ
+        <strong>สลับดู preview ในแต่ละขนาดหน้าจอ</strong> (Mobile S/M/L, Tablet, Laptop, Laptop L, 4K)
+        โดยไม่ต้องปรับขนาดหน้าต่างเอง — เลือก "Auto" เพื่อกลับไปยึดตามขนาดพาเนลจริง
+        กด <strong>"⬇ ดาวน์โหลดไฟล์ที่ครอปแล้ว"</strong> เพื่อบันทึกไฟล์ตาม aspect-ratio ของ breakpoint
+        ที่กำลังดูอยู่ โดยนามสกุลไฟล์จะพยายามให้ตรงกับไฟล์ต้นฉบับ (เช่น .mp4, .png, .jpg, .webp) —
+        ถ้าเบราว์เซอร์สร้างนามสกุลนั้นไม่ได้ (เช่น .gif หรือ .mov) จะ fallback เป็นฟอร์แมตที่ใกล้เคียงที่สุด
+        พร้อมแจ้งเตือนในข้อความสถานะ`,
+      uploadLabel: 'อัปโหลด / เปลี่ยนไฟล์',
+      noFile: 'ยังไม่ได้เลือกไฟล์',
+      clearBtn: 'ล้างไฟล์',
+      downloadBtn: 'ดาวน์โหลดไฟล์ที่ครอปแล้ว',
+      bpAuto: 'Auto',
+      bpAutoSub: 'Responsive',
+      bpFixedSub: 'ขนาดตายตัว',
+      focusTitle: 'จุดโฟกัสภาพ',
+      focusHint: 'คลิกหรือลากบนภาพเพื่อเลือกจุดที่ต้องการให้อยู่กลางภาพเมื่อถูกครอป (กรอบเหลือง = พื้นที่ที่ถูกครอปไว้)',
+      focusReset: 'กึ่งกลาง',
+      emptyTitle: 'อัปโหลดไฟล์',
+      emptyFormats: 'รองรับไฟล์ประเภท: JPEG / PNG / GIF / MP4',
+      thBreakpoint: 'เบรกพอยต์',
+      thMediaQuery: 'Media query',
+      thAspectRatio: 'อัตราส่วนภาพ (aspect-ratio)',
+      tdAllOther: 'ทุกขนาดที่เหลือ',
+      codeHeading: 'Source code สำหรับ dev',
+      codeSub: 'โค้ด HTML + CSS จริงที่ใช้ควบคุมสัดส่วนภาพ/วิดีโอตามขนาดหน้าจอ คัดลอกไปใช้ในระบบได้เลย',
+      codeHtmlFilename: 'HTML — markup',
+      codeCssFilename: 'CSS — aspect-ratio ตาม breakpoint',
+      copyBtn: '📋 คัดลอก',
+    },
+    en: {
+      title: 'Preview: <picture> / <video class="hero-video">',
+      note: `By default the preview is an empty area showing "Upload File" — click or drag a file into
+        the box to load it (JPEG / PNG / GIF / MP4 supported), or use the "Upload / Change File" button.
+        (Shown only in this preview — nothing is uploaded to any server.) Use the bar below to
+        <strong>switch the preview between screen sizes</strong> (Mobile S/M/L, Tablet, Laptop, Laptop L, 4K)
+        without resizing your own window — pick "Auto" to go back to following the panel's real width.
+        Click <strong>"⬇ Download Cropped File"</strong> to save a file matching the aspect-ratio of the
+        breakpoint you're viewing. The extension will try to match the original file (e.g. .mp4, .png, .jpg,
+        .webp) — if the browser can't produce that extension (e.g. .gif or .mov) it falls back to the closest
+        supported format, with a note in the status message.`,
+      uploadLabel: 'Upload / Change File',
+      noFile: 'No file selected',
+      clearBtn: 'Clear File',
+      downloadBtn: 'Download Cropped File',
+      bpAuto: 'Auto',
+      bpAutoSub: 'Responsive',
+      bpFixedSub: 'Fixed size',
+      focusTitle: 'Focus point',
+      focusHint: 'Click or drag on the image to choose the point to keep centered when cropped (yellow box = visible crop area)',
+      focusReset: 'Center',
+      emptyTitle: 'Upload File',
+      emptyFormats: 'Supported formats: JPEG / PNG / GIF / MP4',
+      thBreakpoint: 'Breakpoint',
+      thMediaQuery: 'Media query',
+      thAspectRatio: 'aspect-ratio',
+      tdAllOther: 'All other sizes',
+      codeHeading: 'Source Code for Devs',
+      codeSub: "The actual HTML + CSS used to control the image/video aspect-ratio per breakpoint — copy it straight into your project.",
+      codeHtmlFilename: 'HTML — markup',
+      codeCssFilename: 'CSS — aspect-ratio by breakpoint',
+      copyBtn: '📋 Copy',
+    },
+  };
+
+  // Dynamic, JS-only status messages (not tied to a specific DOM element)
+  const T = {
+    th: {
+      unsupportedFile: 'รองรับเฉพาะไฟล์รูปภาพหรือวิดีโอเท่านั้น',
+      imageNotReady: 'รูปภาพยังโหลดไม่เสร็จ ลองอีกครั้ง',
+      imageCreateFail: 'สร้างไฟล์รูปไม่สำเร็จ',
+      videoNotReady: 'วิดีโอยังโหลดไม่เสร็จ ลองอีกครั้ง',
+      noMediaRecorder: 'เบราว์เซอร์นี้ไม่รองรับการบันทึกวิดีโอ',
+      recordingVideo: 'กำลังบันทึกวิดีโอ (รอจนวิดีโอเล่นจบหนึ่งรอบ)...',
+      playFailed: 'เล่นวิดีโอเพื่อบันทึกไม่สำเร็จ',
+      noFileForDownload: 'ไม่พบไฟล์สำหรับดาวน์โหลด',
+      copiedBtn: '✓ คัดลอกแล้ว',
+      downloadedImage: (w, h, ext) => `ดาวน์โหลดแล้ว (${w}×${h}px, .${ext})`,
+      fallbackImage: (req, ext, w, h) => `.${req} ไม่รองรับการสร้างในเบราว์เซอร์ จึงดาวน์โหลดเป็น .${ext} แทน (${w}×${h}px)`,
+      downloadedVideo: (w, h, ext) => `ดาวน์โหลดแล้ว (${w}×${h}px, .${ext} ไม่มีเสียง)`,
+      fallbackVideo: (req, ext, w, h) => `.${req} ไม่รองรับการบันทึกในเบราว์เซอร์นี้ จึงดาวน์โหลดเป็น .${ext} แทน (${w}×${h}px, ไม่มีเสียง)`,
+    },
+    en: {
+      unsupportedFile: 'Only image or video files are supported',
+      imageNotReady: "Image hasn't finished loading — try again",
+      imageCreateFail: 'Failed to create the image file',
+      videoNotReady: "Video hasn't finished loading — try again",
+      noMediaRecorder: 'This browser does not support video recording',
+      recordingVideo: 'Recording video (waiting for one full playback loop)...',
+      playFailed: 'Failed to play the video for recording',
+      noFileForDownload: 'No file found to download',
+      copiedBtn: '✓ Copied',
+      downloadedImage: (w, h, ext) => `Downloaded (${w}×${h}px, .${ext})`,
+      fallbackImage: (req, ext, w, h) => `.${req} can't be created in this browser, so it was downloaded as .${ext} instead (${w}×${h}px)`,
+      downloadedVideo: (w, h, ext) => `Downloaded (${w}×${h}px, .${ext}, no audio)`,
+      fallbackVideo: (req, ext, w, h) => `.${req} can't be recorded in this browser, so it was downloaded as .${ext} instead (${w}×${h}px, no audio)`,
+    },
+  };
+
+  const langSwitcher = document.getElementById('lang-switcher');
+
+  function applyLanguage(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      if (el.id === 'file-name') return; // handled separately below (must not clobber an uploaded filename)
+      const key = el.getAttribute('data-i18n');
+      if (I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+      const key = el.getAttribute('data-i18n-html');
+      if (I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+    });
+
+    if (!hasFile) fileNameEl.textContent = I18N[lang].noFile;
+
+    langSwitcher.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+
+    updateBadge();
+  }
+
+  langSwitcher.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-lang]');
+    if (!btn) return;
+    applyLanguage(btn.dataset.lang);
+  });
+
+  // ===== Upload / change file for the preview =====
+  const heroMedia   = document.getElementById('hero-media');
+  const fileInput   = document.getElementById('file-input');
+  const fileNameEl  = document.getElementById('file-name');
+  const resetBtn    = document.getElementById('reset-btn');
+
+  function buildEmptyHtml() {
+    const dict = I18N[currentLang];
+    return `
+      <div class="hero-empty" id="hero-empty">
+        <span class="icon">⬆️</span>
+        <span class="title" data-i18n="emptyTitle">${dict.emptyTitle}</span>
+        <span class="formats" data-i18n="emptyFormats">${dict.emptyFormats}</span>
+      </div>
+    `;
+  }
+
+  let currentObjectUrl = null;
+  let currentSourceExt = ''; // extension of the file currently shown, used to match the download's extension
+
+  function revokeCurrentUrl() {
+    if (currentObjectUrl) {
+      URL.revokeObjectURL(currentObjectUrl);
+      currentObjectUrl = null;
+    }
+  }
+
+  function extOf(filename) {
+    const m = /\.([a-z0-9]+)$/i.exec(filename || '');
+    return m ? m[1].toLowerCase() : '';
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    if (!file.type.startsWith('video/') && !file.type.startsWith('image/')) {
+      fileNameEl.textContent = T[currentLang].unsupportedFile;
+      return;
+    }
+
+    revokeCurrentUrl();
+    const url = URL.createObjectURL(file);
+    currentObjectUrl = url;
+    currentSourceExt = extOf(file.name) || (file.type.startsWith('video/') ? 'mp4' : 'png');
+
+    heroMedia.innerHTML = '';
+
+    if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.className = 'hero-video';
+      video.autoplay = true;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.src = url;
+      heroMedia.appendChild(video);
+    } else {
+      const picture = document.createElement('picture');
+      picture.className = 'hero-picture';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = file.name;
+      picture.appendChild(img);
+      heroMedia.appendChild(picture);
+    }
+
+    const badge = document.createElement('span');
+    badge.id = 'bp-badge';
+    badge.className = 'bp-badge';
+    heroMedia.appendChild(badge);
+    updateBadge();
+
+    // Focus point: reset to center, snapshot the source for the picker once it is ready
+    focusX = 50; focusY = 50;
+    const mediaEl = heroMedia.querySelector('img, video');
+    const onReady = () => { snapshotSource(mediaEl); applyFocus(); };
+    if (mediaEl.tagName === 'VIDEO') mediaEl.addEventListener('loadeddata', onReady);
+    else if (mediaEl.complete && mediaEl.naturalWidth) onReady();
+    else mediaEl.addEventListener('load', onReady);
+    focusPanel.classList.add('show');
+
+    fileNameEl.textContent = file.name;
+    hasFile = true;
+    downloadBtn.disabled = false;
+    downloadStatus.textContent = '';
+  }
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    loadFile(file);
+  });
+
+  // Click the empty-state dropzone to open the file picker
+  heroMedia.addEventListener('click', (e) => {
+    if (e.target.closest('#hero-empty')) fileInput.click();
+  });
+
+  // Drag-and-drop support onto the empty-state dropzone
+  heroMedia.addEventListener('dragover', (e) => {
+    if (!document.getElementById('hero-empty')) return;
+    e.preventDefault();
+    document.getElementById('hero-empty').classList.add('drag-over');
+  });
+  heroMedia.addEventListener('dragleave', () => {
+    const emptyEl = document.getElementById('hero-empty');
+    if (emptyEl) emptyEl.classList.remove('drag-over');
+  });
+  heroMedia.addEventListener('drop', (e) => {
+    const emptyEl = document.getElementById('hero-empty');
+    if (!emptyEl) return;
+    e.preventDefault();
+    emptyEl.classList.remove('drag-over');
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    loadFile(file);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    revokeCurrentUrl();
+    currentSourceExt = '';
+    heroMedia.innerHTML = buildEmptyHtml();
+    fileInput.value = '';
+    hasFile = false;
+    focusX = 50; focusY = 50;
+    focusPanel.classList.remove('show');
+    fileNameEl.textContent = I18N[currentLang].noFile;
+    downloadBtn.disabled = true;
+    downloadStatus.textContent = '';
+    updateBadge();
+  });
+
+  // ===== Download the currently-cropped file (matches the active breakpoint's aspect-ratio) =====
+  const downloadBtn    = document.getElementById('download-btn');
+  const downloadStatus = document.getElementById('download-status');
+
+  const RATIOS = {
+    mobile:  [4, 3],
+    tablet:  [16, 8],
+    desktop: [16, 6],
+  };
+
+  // "cover" crop math — same box the browser computes for object-fit: cover
+  function computeCoverCrop(sourceW, sourceH, ratioW, ratioH, fx = 50, fy = 50) {
+    const targetRatio = ratioW / ratioH;
+    const sourceRatio  = sourceW / sourceH;
+    let cropW, cropH;
+    if (sourceRatio > targetRatio) {
+      cropH = sourceH;
+      cropW = sourceH * targetRatio;
+    } else {
+      cropW = sourceW;
+      cropH = sourceW / targetRatio;
+    }
+    // Center the crop window on the focus point, clamped to the image bounds
+    const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+    return {
+      sx: clamp((fx / 100) * sourceW - cropW / 2, 0, sourceW - cropW),
+      sy: clamp((fy / 100) * sourceH - cropH / 2, 0, sourceH - cropH),
+      sw: cropW,
+      sh: cropH,
+    };
+  }
+
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  // ----- Pick an export format that matches the original file's extension, with a graceful fallback -----
+  const IMAGE_MIME_BY_EXT = {
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+  };
+
+  function pickImageFormat(ext) {
+    const mime = IMAGE_MIME_BY_EXT[ext];
+    if (mime && (mime !== 'image/webp' || canEncodeWebp())) {
+      return { mime, ext, matched: true };
+    }
+    // Canvas can't encode this format (e.g. gif/svg/bmp) — fall back to png
+    return { mime: 'image/png', ext: 'png', matched: false, requestedExt: ext };
+  }
+
+  let _webpSupport = null;
+  function canEncodeWebp() {
+    if (_webpSupport !== null) return _webpSupport;
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    _webpSupport = c.toDataURL('image/webp').startsWith('data:image/webp');
+    return _webpSupport;
+  }
+
+  const VIDEO_MP4_CANDIDATES = [
+    'video/mp4;codecs=avc1.640028',
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4;codecs=h264',
+    'video/mp4',
+  ];
+  const VIDEO_WEBM_CANDIDATES = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+  ];
+
+  function pickVideoFormat(ext) {
+    const wantsMp4 = ext === 'mp4' || ext === 'mov' || ext === 'm4v';
+    if (wantsMp4 && typeof MediaRecorder !== 'undefined') {
+      for (const c of VIDEO_MP4_CANDIDATES) {
+        if (MediaRecorder.isTypeSupported(c)) return { mime: c, ext: 'mp4', matched: true };
+      }
+    }
+    if (ext === 'webm' && typeof MediaRecorder !== 'undefined') {
+      for (const c of VIDEO_WEBM_CANDIDATES) {
+        if (MediaRecorder.isTypeSupported(c)) return { mime: c, ext: 'webm', matched: true };
+      }
+    }
+    // Fallback: browser can't record the requested container — use whatever it does support
+    for (const c of VIDEO_WEBM_CANDIDATES) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c)) {
+        return { mime: c, ext: 'webm', matched: false, requestedExt: ext };
+      }
+    }
+    return null;
+  }
+
+  function downloadCroppedImage(imgEl, ratioW, ratioH, sourceExt, outSize) {
+    const sw = imgEl.naturalWidth, sh = imgEl.naturalHeight;
+    if (!sw || !sh) {
+      downloadStatus.textContent = T[currentLang].imageNotReady;
+      return;
+    }
+    const format = pickImageFormat(sourceExt);
+    const crop = computeCoverCrop(sw, sh, ratioW, ratioH, focusX, focusY);
+    const canvas = document.createElement('canvas');
+    canvas.width  = outSize ? outSize.w : Math.round(crop.sw);
+    canvas.height = outSize ? outSize.h : Math.round(crop.sh);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) { downloadStatus.textContent = T[currentLang].imageCreateFail; return; }
+      triggerDownload(blob, `hero-cropped-${ratioW}x${ratioH}.${format.ext}`);
+      downloadStatus.textContent = format.matched
+        ? T[currentLang].downloadedImage(canvas.width, canvas.height, format.ext)
+        : T[currentLang].fallbackImage(format.requestedExt, format.ext, canvas.width, canvas.height);
+    }, format.mime, 0.92);
+  }
+
+  function recordCroppedVideo(videoEl, ratioW, ratioH, sourceExt, outSize) {
+    const sw = videoEl.videoWidth, sh = videoEl.videoHeight;
+    if (!sw || !sh) {
+      downloadStatus.textContent = T[currentLang].videoNotReady;
+      return;
+    }
+    const format = pickVideoFormat(sourceExt);
+    if (!format) {
+      downloadStatus.textContent = T[currentLang].noMediaRecorder;
+      return;
+    }
+    const crop = computeCoverCrop(sw, sh, ratioW, ratioH, focusX, focusY);
+    const canvas = document.createElement('canvas');
+    canvas.width  = outSize ? outSize.w : Math.round(crop.sw);
+    canvas.height = outSize ? outSize.h : Math.round(crop.sh);
+    const ctx = canvas.getContext('2d');
+
+    const stream   = canvas.captureStream(30);
+    const recorder = new MediaRecorder(stream, { mimeType: format.mime });
+    const chunks   = [];
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+
+    const wasLoop  = videoEl.loop;
+    const wasMuted = videoEl.muted;
+    let rafId;
+
+    function cleanup() {
+      cancelAnimationFrame(rafId);
+      videoEl.removeEventListener('ended', onEnded);
+      videoEl.loop = wasLoop;
+      videoEl.muted = wasMuted;
+      if (wasLoop) videoEl.play().catch(() => {});
+      downloadBtn.disabled = false;
+    }
+
+    function onEnded() {
+      recorder.stop();
+    }
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: format.mime.split(';')[0] });
+      triggerDownload(blob, `hero-cropped-${ratioW}x${ratioH}.${format.ext}`);
+      downloadStatus.textContent = format.matched
+        ? T[currentLang].downloadedVideo(canvas.width, canvas.height, format.ext)
+        : T[currentLang].fallbackVideo(format.requestedExt, format.ext, canvas.width, canvas.height);
+      cleanup();
+    };
+
+    function drawFrame() {
+      ctx.drawImage(videoEl, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height);
+      rafId = requestAnimationFrame(drawFrame);
+    }
+
+    videoEl.loop = false;
+    videoEl.addEventListener('ended', onEnded);
+    videoEl.currentTime = 0;
+
+    downloadBtn.disabled = true;
+    downloadStatus.textContent = T[currentLang].recordingVideo;
+
+    videoEl.play().then(() => {
+      recorder.start();
+      drawFrame();
+    }).catch(() => {
+      downloadStatus.textContent = T[currentLang].playFailed;
+      cleanup();
+    });
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    const w = simulatedWidth !== null ? simulatedWidth : window.innerWidth;
+    const cat = categoryFor(w);
+    const fixed = simulatedHeight !== null;
+    const [rw, rh] = fixed ? [simulatedWidth, simulatedHeight] : RATIOS[cat];
+    const outSize = fixed ? { w: simulatedWidth, h: simulatedHeight } : null; // exact pixels for fixed presets
+
+    const videoEl = heroMedia.querySelector('video');
+    const imgEl   = heroMedia.querySelector('img');
+
+    downloadStatus.textContent = '';
+
+    if (videoEl) {
+      if (typeof MediaRecorder === 'undefined') {
+        downloadStatus.textContent = T[currentLang].noMediaRecorder;
+        return;
+      }
+      recordCroppedVideo(videoEl, rw, rh, currentSourceExt, outSize);
+    } else if (imgEl) {
+      downloadCroppedImage(imgEl, rw, rh, currentSourceExt, outSize);
+    } else {
+      downloadStatus.textContent = T[currentLang].noFileForDownload;
+    }
+  });
+
+  // ===== Copy-to-clipboard for the dev source-code section =====
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const targetEl = document.getElementById(btn.dataset.copyTarget);
+      if (!targetEl) return;
+      const text = targetEl.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (err) {
+        // Fallback for browsers without clipboard API access
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      const original = btn.textContent;
+      btn.textContent = T[currentLang].copiedBtn;
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1800);
+    });
+  });
+
+  // ===== Focus point =====
+  const focusPanel  = document.getElementById('focus-panel');
+  const focusPicker = document.getElementById('focus-picker');
+  const focusCanvas = document.getElementById('focus-canvas');
+  const focusCropEl = document.getElementById('focus-crop');
+  const focusDotEl  = document.getElementById('focus-dot');
+  const focusXInput = document.getElementById('focus-x');
+  const focusYInput = document.getElementById('focus-y');
+
+  function currentTargetRatio() {
+    if (simulatedHeight !== null) return [simulatedWidth, simulatedHeight];
+    const w = simulatedWidth !== null ? simulatedWidth : window.innerWidth;
+    return RATIOS[categoryFor(w)];
+  }
+
+  function sourceSize(mediaEl) {
+    return mediaEl.tagName === 'VIDEO'
+      ? [mediaEl.videoWidth, mediaEl.videoHeight]
+      : [mediaEl.naturalWidth, mediaEl.naturalHeight];
+  }
+
+  // Draw a small still of the full (uncropped) source into the picker
+  function snapshotSource(mediaEl) {
+    const [sw, sh] = sourceSize(mediaEl);
+    if (!sw || !sh) return;
+    const w = Math.min(sw, 640);
+    focusCanvas.width = w;
+    focusCanvas.height = Math.round(w * sh / sw);
+    focusCanvas.getContext('2d').drawImage(mediaEl, 0, 0, focusCanvas.width, focusCanvas.height);
+  }
+
+  // Apply the focus point to the live preview (object-position) and refresh the picker overlay
+  function applyFocus() {
+    const mediaEl = heroMedia.querySelector('img, video');
+    if (!mediaEl) return;
+    const [sw, sh] = sourceSize(mediaEl);
+    if (!sw || !sh) return;
+    const [rw, rh] = currentTargetRatio();
+    const crop = computeCoverCrop(sw, sh, rw, rh, focusX, focusY);
+
+    // Convert the crop window start into the equivalent CSS object-position percentages
+    const px = sw > crop.sw + 0.5 ? (crop.sx / (sw - crop.sw)) * 100 : 50;
+    const py = sh > crop.sh + 0.5 ? (crop.sy / (sh - crop.sh)) * 100 : 50;
+    mediaEl.style.objectPosition = px + '% ' + py + '%';
+
+    focusCropEl.style.left   = (crop.sx / sw * 100) + '%';
+    focusCropEl.style.top    = (crop.sy / sh * 100) + '%';
+    focusCropEl.style.width  = (crop.sw / sw * 100) + '%';
+    focusCropEl.style.height = (crop.sh / sh * 100) + '%';
+    focusDotEl.style.left = focusX + '%';
+    focusDotEl.style.top  = focusY + '%';
+    if (document.activeElement !== focusXInput) focusXInput.value = Math.round(focusX);
+    if (document.activeElement !== focusYInput) focusYInput.value = Math.round(focusY);
+  }
+  onLayoutChange = applyFocus;
+
+  function setFocus(x, y) {
+    const clamp = (v) => Math.min(Math.max(v, 0), 100);
+    focusX = clamp(x);
+    focusY = clamp(y);
+    applyFocus();
+  }
+
+  let draggingFocus = false;
+  function focusFromEvent(e) {
+    const r = focusPicker.getBoundingClientRect();
+    setFocus((e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100);
+  }
+  focusPicker.addEventListener('pointerdown', (e) => {
+    draggingFocus = true;
+    focusPicker.setPointerCapture(e.pointerId);
+    focusFromEvent(e);
+  });
+  focusPicker.addEventListener('pointermove', (e) => { if (draggingFocus) focusFromEvent(e); });
+  focusPicker.addEventListener('pointerup',     () => { draggingFocus = false; });
+  focusPicker.addEventListener('pointercancel', () => { draggingFocus = false; });
+
+  focusXInput.addEventListener('input', () => setFocus(parseFloat(focusXInput.value) || 0, focusY));
+  focusYInput.addEventListener('input', () => setFocus(focusX, parseFloat(focusYInput.value) || 0));
+  document.getElementById('focus-grid').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-fx]');
+    if (b) setFocus(parseFloat(b.dataset.fx), parseFloat(b.dataset.fy));
+  });
+  document.getElementById('focus-reset').addEventListener('click', () => setFocus(50, 50));
+
+  // Populate language-dependent text (note paragraph, etc.) on first load
+  applyLanguage(currentLang);
+</script>
+</body>
+</html>
